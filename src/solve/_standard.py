@@ -1,7 +1,7 @@
 import numpy as np
 
 from numpy import transpose
-from numpy.linalg import inv
+from scipy.linalg import lu_factor, lu_solve
 
 
 class KUFSolver(object):
@@ -97,8 +97,8 @@ class KUFSolver(object):
         K_EF = self._K_EF
         u_e = self._u_e
 
-        # solve for the unknown displacements
-        u_f = inv(K_F).dot(f_f - transpose(K_EF).dot(u_e))
+        # solve for the unknown displacements using LU decompsition
+        u_f = lu_solve(lu_factor(K_F), f_f - transpose(K_EF).dot(u_e))
         self._u[self._ndef_u:] = u_f
 
         # calculate unknown loads
