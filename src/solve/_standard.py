@@ -33,6 +33,7 @@ class KUFSolver(object):
     >>> solver.u
     array([-10.0, 0.0, -20.0], dtype=object)
     """
+
     def __init__(self, K, u, f, auto=True):
         # save shapes of vectors
         self._u_shape = np.array(u).shape
