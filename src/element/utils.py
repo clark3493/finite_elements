@@ -1,7 +1,5 @@
 import numpy as np
 
-from math import asin, atan2, cos, sin
-
 
 def distance(a, b):
     """
