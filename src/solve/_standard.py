@@ -84,7 +84,7 @@ class KUFSolver(object):
         return self._u[:self._ndef_u]
 
     def _calc_f(self):
-        """Calculate the value of unkown loads with the displacement vector and corresponding stiffness matrix row."""
+        """Calculate the value of unknown loads with the displacement vector and corresponding stiffness matrix row."""
         for i in np.arange(len(self.f)):
             if self._f[i][0] is None:
                 self._f[i][0] = self._K[i, :].dot(self._u)
@@ -97,7 +97,7 @@ class KUFSolver(object):
         K_EF = self._K_EF
         u_e = self._u_e
 
-        # solve for the unknown displacements using LU decompsition
+        # solve for the unknown displacements using LU decomposition
         u_f = lu_solve(lu_factor(K_F), f_f - transpose(K_EF).dot(u_e))
         self._u[self._ndef_u:] = u_f
 
@@ -105,7 +105,7 @@ class KUFSolver(object):
         self._calc_f()
 
     def _sort(self):
-        """Sort the stiffness, displacement and load arrays such that all know displacements are stored together."""
+        """Sort the stiffness, displacement and load arrays such that all known displacements are stored together."""
         self._sort_u()
         self._sort_f()
 
@@ -127,7 +127,7 @@ class KUFSolver(object):
         for j, ind in enumerate(f_defined):
             self._K[j + len(f_undefined), :] = K[ind, :]
 
-        # save indices to resort data in order it was originall provided
+        # save indices to resort data in order it was originally provided
         self._f_indices = np.hstack([f_undefined, f_defined])
 
     def _sort_u(self):
