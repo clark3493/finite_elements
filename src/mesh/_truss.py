@@ -1,3 +1,4 @@
+import dill
 import sys
 import numpy as np
 
@@ -28,6 +29,8 @@ class Truss(object):
         Applied loads for each node (if any).
     auto: bool, optional.
         Flag to automatically solve the system after initializing the Truss. Default=True.
+    save: str, optional
+        Name of output file to store results for post-processing.
 
     Attributes
     ----------
@@ -45,15 +48,16 @@ class Truss(object):
     .. [2] Nodes with 0 applied load should have defined 0. loads in the supplied
        load vector. 'None' for nodal load indicates a reaction force that needs
        to be solved for.
-
     """
-    def __init__(self, nodes, elements, displacements, loads, auto=True):
+    def __init__(self, nodes, elements, displacements, loads, auto=True, save=None):
         self.nodes = nodes
         self.elements = elements
 
         # convert supplied displacement and load vectors to numpy arrays
         self.displacements = {k: np.array(d) for k, d in displacements.items()}
         self.loads = {k: np.array(l) for k, l in loads.items()}
+
+        self.save = save
 
         self.ndof = sum((node.ndof for node in nodes))
         """
@@ -107,6 +111,11 @@ class Truss(object):
                 u = np.vstack([u, displacement.reshape((node.ndof, 1))])
         return u
 
+    def save_to_file(self):
+        """Pickle the truss object for data persistence."""
+        with open(self.save, 'wb') as f:
+            dill.dump(self, f)
+
     def solve(self):
         """
         Solve the truss system of equations and store the resulting displacement and load data.
@@ -120,6 +129,9 @@ class Truss(object):
 
         self.displacements = self._vector_to_node_dict(solver.u)
         self.loads = self._vector_to_node_dict(solver.f)
+
+        if self.save is not None:
+            self.save_to_file()
 
     def _define_transformation_matrices(self, nodes, elements):
         """
