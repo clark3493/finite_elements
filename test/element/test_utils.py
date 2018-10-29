@@ -3,7 +3,7 @@ sys.path.insert(0, '../../src')
 
 import unittest
 
-from element.utils import *
+from utils import *
 
 
 class UtilsTestCase(unittest.TestCase):
