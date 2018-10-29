@@ -113,8 +113,13 @@ class Truss(object):
 
     def save_to_file(self):
         """Pickle the truss object for data persistence."""
+        post_nodes = {node.id: node.to_post(self.displacements[node.id]) for node in self.nodes}
+        post_elements = {element.id: element.to_post([post_nodes[node.id] for node in element.nodes]) \
+                         for element in self.elements}
+
+        post_items = {'nodes': post_nodes, 'elements': post_elements, 'loads': self.loads}
         with open(self.save, 'wb') as f:
-            dill.dump(self, f)
+            dill.dump(post_items, f)
 
     def solve(self):
         """
