@@ -1,4 +1,11 @@
+import sys
 import numpy as np
+
+SRC_DIR = ".."
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+from post import PostNode
 
 
 class Node(object):
@@ -46,4 +53,7 @@ class Node(object):
             raise ValueError("%d nodal coordinates provided but node is only %d dimensional" % (len(value), self.ndof))
         else:
             self._x = np.array(value + [0.] * (self.ndof-len(value)))
+
+    def to_post(self, dx):
+        return PostNode(self, dx)
 

@@ -1,7 +1,14 @@
+import sys
 import numpy as np
 
 from numpy import transpose
-from .utils import distance
+from utils import distance
+
+SRC_DIR = ".."
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+from post.element.post_D1 import PostRod
 
 
 class Rod(object):
@@ -90,3 +97,6 @@ class Rod(object):
         r[0, 0:ndof//2] = [(x2 - x1) / self.length for x1, x2 in zip(self.nodes[0].x, self.nodes[1].x)]
         r[1, ndof//2:ndof] = [(x2 - x1) / self.length for x1, x2 in zip(self.nodes[0].x, self.nodes[1].x)]
         return r
+
+    def to_post(self, post_nodes):
+        return PostRod(self, post_nodes)
