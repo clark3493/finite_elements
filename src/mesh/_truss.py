@@ -1,10 +1,14 @@
 import dill
+import os
 import sys
 import numpy as np
 
 from numpy import transpose
 
-sys.path.insert(0, '..')
+SRC_DIR = os.path.abspath("..")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
 from solve import KUFSolver
 
 

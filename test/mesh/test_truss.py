@@ -1,5 +1,8 @@
+import os
 import sys
-sys.path.insert(0, r'..\..\src')
+SRC_DIR = os.path.abspath(r"..\..\src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 import numpy as np
 import unittest

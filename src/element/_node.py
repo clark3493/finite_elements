@@ -1,7 +1,8 @@
+import os
 import sys
 import numpy as np
 
-SRC_DIR = ".."
+SRC_DIR = os.path.abspath("..")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
