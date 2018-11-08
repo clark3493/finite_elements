@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 
-SRC_DIR = os.path.abspath("..")
+SRC_DIR = os.path.dirname(os.path.dirname(__file__))
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
@@ -26,7 +26,7 @@ class Node(object):
     ndof: int, optional
         Number of nodal degrees of freedom. Default=3.
     """
-    def __init__(self, nid, x, ndof=3):
+    def __init__(self, x, nid=None, ndof=3):
         self.id = nid
         self._ndof = ndof
 
@@ -57,4 +57,3 @@ class Node(object):
 
     def to_post(self, dx):
         return PostNode(self, dx)
-
