@@ -21,7 +21,7 @@ class AbstractElement1D(object):
     """
     An abstract class to hold method which are common to multiple types of 1D elements.
 
-    The user has the option to specify a number of elements to be linearly
+    The user has the option to specify a number of nodes to be linearly
     spaced between the ends of the element in addition to the provided global
     nodes.
 
