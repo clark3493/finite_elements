@@ -8,7 +8,7 @@ def collinear(points):
     Collinearity is determined by verifying that the cross product
     of xi and X is zero for all xi, where:
         - xi is the i'th coordinate minus the first coordinate
-        - X is the list coordinate minus the first coordinate
+        - X is the last coordinate minus the first coordinate
 
     Point coordinates may be of arbitrary dimension but the number
     of dimensions for each point must be the same.
