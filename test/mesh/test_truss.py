@@ -15,10 +15,10 @@ from mesh import Truss
 class MyTestCase(unittest.TestCase):
 
     def setup_truss1(self):
-        nodeA = Node(1, [0., 0.], ndof=2)
-        nodeB = Node(2, [1., 0.], ndof=2)
-        nodeC = Node(3, [1., 1.], ndof=2)
-        nodeD = Node(4, [0., 1.], ndof=2)
+        nodeA = Node([0., 0.], nid=1, ndof=2)
+        nodeB = Node([1., 0.], nid=2, ndof=2)
+        nodeC = Node([1., 1.], nid=3, ndof=2)
+        nodeD = Node([0., 1.], nid=4, ndof=2)
 
         nodes = [nodeA, nodeB, nodeC, nodeD]
 
