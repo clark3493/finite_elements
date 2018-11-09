@@ -14,16 +14,26 @@ from element.D1 import Rod
 class OneDimensionalElementTestCase(unittest.TestCase):
 
     def setup_rod1(self):
-        node1 = Node(1, [1., 0., 0.])
-        node2 = Node(2, [0., 1., 0.])
+        node1 = Node([1., 0., 0.], nid=1)
+        node2 = Node([0., 1., 0.], nid=2)
         rod = Rod(1, [node1, node2], E=1.*10e11, area=0.02)
         return rod, [node1, node2]
 
     def setup_rod2(self):
-        node1 = Node(1, [1., 0.], ndof=2)
-        node2 = Node(2, [0., 1.], ndof=2)
+        node1 = Node([1., 0.], nid=1, ndof=2)
+        node2 = Node([0., 1.], nid=2, ndof=2)
         rod = Rod(1, [node1, node2], E=1.*10e11, area=0.02)
         return rod, [node1, node2]
+
+    def test_rod1_gauss_point_values(self):
+        rod, nodes = self.setup_rod1()
+        z, w = rod.gauss_points
+        self.assertTrue(np.allclose(0., z))
+
+    def test_rod1_gauss_point_weights(self):
+        rod, nodes = self.setup_rod1()
+        z, w = rod.gauss_points
+        self.assertEqual(2., w)
 
     def test_rod1_length(self):
         rod, nodes = self.setup_rod1()
@@ -34,10 +44,6 @@ class OneDimensionalElementTestCase(unittest.TestCase):
         expected = 1. / np.sqrt(2.) * np.array([[-1.,  1.,  0.,  0.,  0.,  0.],
                                                 [ 0.,  0.,  0., -1.,  1.,  0.]])
         self.assertTrue(np.allclose(expected, rod.R))
-
-    def test_rod1_stiffness(self):
-        rod, nodes = self.setup_rod1()
-        self.assertEqual(.02 * 1.*10e11 / np.sqrt(2.), rod.k)
 
     def test_rod1_stiffness_matrix(self):
         rod, nodes = self.setup_rod1()
@@ -58,10 +64,6 @@ class OneDimensionalElementTestCase(unittest.TestCase):
         expected = 1. / np.sqrt(2.) * np.array([[-1.,  1.,  0.,  0.],
                                                 [ 0.,  0., -1.,  1.]])
         self.assertTrue(np.allclose(expected, rod.R))
-
-    def test_rod2_stiffness(self):
-        rod, nodes = self.setup_rod2()
-        self.assertEqual(.02 * 1.*10e11 / np.sqrt(2.), rod.k)
 
     def test_rod2_stiffness_matrix(self):
         rod, nodes = self.setup_rod2()
