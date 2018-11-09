@@ -18,7 +18,7 @@ class PostRod(object):
     """
 
     def __init__(self, rod, post_nodes):
-        self._id = rod.id
+        self._eid = rod.eid
         self._E = rod.E
         self._length_rigid = rod.length
 
@@ -33,8 +33,8 @@ class PostRod(object):
         return self._E
 
     @property
-    def id(self):
-        return self._id
+    def eid(self):
+        return self._eid
 
     @property
     def length_flex(self):
