@@ -100,7 +100,7 @@ class Truss(object):
     def K(self):
         K = np.zeros((self.ndof, self.ndof))
         for element in self.elements:
-            L = self.L[element.id]
+            L = self.L[element.eid]
             K += transpose(L).dot(element.K).dot(L)
         return K
 
@@ -118,7 +118,7 @@ class Truss(object):
     def save_to_file(self):
         """Pickle the truss object for data persistence."""
         post_nodes = {node.id: node.to_post(self.displacements[node.id]) for node in self.nodes}
-        post_elements = {element.id: element.to_post([post_nodes[node.id] for node in element.nodes]) \
+        post_elements = {element.eid: element.to_post([post_nodes[node.id] for node in element.nodes]) \
                          for element in self.elements}
 
         post_items = {'nodes': post_nodes, 'elements': post_elements, 'loads': self.loads}
@@ -176,7 +176,7 @@ class Truss(object):
                 # store indices corresponding to the nodal degrees of freedom
                 dof_indices += [previous_dof + i for i in range(element_node.ndof)]
             # save the transformation matrix
-            L[element.id] = self._define_transformation_matrix(element, dof_indices)
+            L[element.eid] = self._define_transformation_matrix(element, dof_indices)
         return L
 
     def _define_transformation_matrix(self, element, indices):
