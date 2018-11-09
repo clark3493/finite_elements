@@ -12,6 +12,7 @@ SRC_DIR = os.path.dirname(os.path.dirname(__file__))
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+from post.element.post_D1 import PostRod
 from utils import collinear, distance
 from ._gauss import gauss_points, weighted_integration
 from ._node import Node
@@ -231,6 +232,9 @@ class AbstractElement1D(object):
             element_nodes = [Node(xi) for xi in coords]
             self._element_nodes = element_nodes
 
+    def to_post(self, post_nodes):
+        raise NotImplementedError("This method must be overridden by a sub-class")
+
     @property
     def _N(self):
         """
@@ -326,3 +330,6 @@ class Rod(AbstractElement1D):
         Bz = weighted_integration(self.B, z, w)
         I = np.outer(Bz, Bz)
         return self.J * self.E * self.area * I
+
+    def to_post(self, post_nodes):
+        return PostRod(self, post_nodes)
