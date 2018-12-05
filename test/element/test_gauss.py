@@ -13,19 +13,19 @@ from element._gauss import gauss_points, _M, _P
 class GaussPointTestCase(unittest.TestCase):
 
     def test_gauss_points_1d_z1(self):
-        z, W = gauss_points(1, ndims=1)
+        z, W = gauss_points(1)
         self.assertTrue(np.allclose([0.], z))
 
     def test_gauss_points_1d_W1(self):
-        z, W = gauss_points(1, ndims=1)
+        z, W = gauss_points(1)
         self.assertEqual([2.], W)
 
     def test_gauss_points_1d_z2(self):
-        z, W = gauss_points(2, ndims=1)
+        z, W = gauss_points(2)
         self.assertTrue(np.allclose([-1/np.sqrt(3), 1/np.sqrt(3)], z))
 
     def test_gauss_points_1d_W2(self):
-        z, W = gauss_points(2, ndims=1)
+        z, W = gauss_points(2)
         self.assertTrue(np.allclose([1., 1.], W))
 
     def test_M(self):
