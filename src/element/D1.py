@@ -31,14 +31,14 @@ class AbstractElement1D(object):
     eid: int
         Element ID.
     nodes: list(Node)
-        Global nodes which make up the element.
+        Global nodes which make up the element. See Note 1.
     n_local_nodes: int, optional
         Number of local nodes to add in additional to global nodes. Default=0.
 
     Notes
     -----
     .. [1] The ends of the element MUST be the first and last nodes in the provided
-           list of nodes.
+           list of global nodes and all supplied global nodes must be collinear.
     """
     # TODO: IMPLEMENT PROPERTY CACHEING TO DECREASE COMPUTATION TIME
     def __init__(self, eid, nodes, n_local_nodes=0):
@@ -52,8 +52,19 @@ class AbstractElement1D(object):
 
     @property
     def B(self):
-        """Abstract placeholder for subclass implementation of shape function derivatives."""
-        raise NotImplementedError("This property must be implemented by a subclass")
+        """
+        Vector of shape functions derivatives for each node.
+
+        Each shape function is a compiled symbolic function which can be
+        called by passing in a float or integer. The order of the derivative can vary
+        depending on the element type and so the symbolic B function must be implemented
+        in the subclass.
+
+        Returns
+        -------
+        B: list(function)
+        """
+        return np.array([lambdify(x, Bi) for Bi in self._B])
 
     @property
     def local_nodes(self):
@@ -78,7 +89,7 @@ class AbstractElement1D(object):
         w: list(float)
             Weights corresponding to each Gauss point.
         """
-        return gauss_points(self.ngp, ndims=1)
+        return gauss_points(self.ngp)
 
     @property
     def global_nodes(self):
@@ -152,18 +163,8 @@ class AbstractElement1D(object):
 
     @property
     def ngp(self):
-        """
-        The number of gauss points required to integrate the element exactly.
-
-        ngp = (p + 1) / 2 = n / 2, where:
-            p = degree of polynomial integration
-            n = number of nodes in the element.
-
-        Returns
-        -------
-        ngp: int
-        """
-        return ceil(len(self.nodes) / 2)
+        """Abstract placeholder for the number of Gauss points required to integrate the element exactly."""
+        raise NotImplementedError("This method must be overridden by a subclass")
 
     @property
     def nodes(self):
@@ -185,21 +186,21 @@ class AbstractElement1D(object):
 
     @property
     def R(self):
-        """
-        Local coordinate system to element coordinate system transformation matrix.
+        """Abstract placeholder for element coordinate system transformation matrix."""
+        raise NotImplementedError("This method must be overridden by a subclass")
 
-        Vectors in the local coordinate system can be converted to the element
-        coordinate system by pre-multiplying by R.
+    @property
+    def x(self):
+        """
+        Coordinate of each node in the 1D element coordinate system, with x=0 being the first node.
+
+        The position of each node if defined by a single value.
 
         Returns
         -------
-        R: numpy.ndarray
+        x: list(float)
         """
-        n = self.ndof // 2
-        r = np.zeros((len(self.nodes), self.ndof))
-        for i in range(len(self.nodes)):
-            r[i, n*i:n*(i+1)] = [(x2 - x1) / self.length for x1, x2 in zip(self.nodes[0].x, self.nodes[-1].x)]
-        return r
+        return [distance(node.x, self.nodes[0].x) for node in self.nodes]
 
     @property
     def z(self):
@@ -212,7 +213,7 @@ class AbstractElement1D(object):
         -------
         z: list(float)
         """
-        return [2 * distance(node.x, self.nodes[0].x) / self.length - 1. for node in self.nodes]
+        return [2 * xi / self.length - 1. for xi in self.x]
 
     def set_local_nodes(self, n):
         """
@@ -236,22 +237,65 @@ class AbstractElement1D(object):
         raise NotImplementedError("This method must be overridden by a sub-class")
 
     @property
+    def _B(self):
+        """Abstract placeholder for subclass implementation of symbolic shape function derivatives"""
+        raise NotImplementedError("This method must be overridden by a sub-class")
+
+    @property
     def _N(self):
+        """Abstract placeholder for subclass implementation of symbolic shape functions for each nodal DOF."""
+        raise NotImplementedError("This method must be overridden by a sub-class")
+
+
+class BeamPlanar(AbstractElement1D):
+
+    def __init__(self, eid, nodes, E, I):
+        super().__init__(eid, nodes)
+        self.E = E
+        self.I = I
+
+    @property
+    def J(self):
         """
-        Symbolic shape functions for each node.
+        Element Jacobian.
+
+        For this element, the Jacobian is simply a scalar value.
 
         Returns
         -------
-        _N: symbolic function of x
+        J: float
         """
-        N = []
-        for i, zi in enumerate(self.z):
-            Ni = 1.
-            for j, zj in enumerate(self.z):
-                if i != j:
-                    Ni = Ni * (x - zj) / (zi - zj)
-            N.append(Ni)
-        return N
+        return distance(self.nodes[0].x, self.nodes[-1].x) / 2.
+
+    @property
+    def K_LOCAL(self):
+        z, w = self.gauss_points
+        BB = np.outer(self._B, self._B)
+        BBf = np.array([lambdify(x, Bi) for Bi in BB.flatten()])
+        integral = weighted_integration(BBf, z, w).reshape(BB.shape)
+        return self.J * self.E * self.I * integral
+
+    @property
+    def ngp(self):
+        return ceil(2*len(self.nodes) / 2.)
+
+    @property
+    def R(self):
+        r = np.zeros((4, 4))
+        for i in range(4):
+            r[i, i] = 1.
+        return r
+
+    @property
+    def _B(self):
+        return np.array([diff(diff(Ni) * 2./self.length) * 2./self.length for Ni in self._N])
+
+    @property
+    def _N(self):
+        return np.array([1./4. * (1 - x)**2. * (2 + x),
+                         self.length/8. * (1 - x)**2. * (1 + x),
+                         1./4. * (1 + x)**2. * (2 - x),
+                         self.length/8. * (1 + x)**2. * (x - 1)])
 
 
 class Rod(AbstractElement1D):
@@ -265,30 +309,22 @@ class Rod(AbstractElement1D):
     eid: int
         Element ID.
     nodes: list(Node)
-        The two nodes which define the Rod.
+        Global nodes which make up the element. See 'See Also' below.
     E: float
         Young's modulus.
     area: float
         Cross sectional area.
+    n_local_nodes: int, optional
+        Number of local nodes to add in additional to global nodes. Default=0.
+
+    See Also
+    --------
+    .. [1] AbstractElement1D: Rod inherited class which defines node storage, etc.
     """
-    def __init__(self, eid, nodes, E, area):
-        super().__init__(eid, nodes)
+    def __init__(self, eid, nodes, E, area, n_local_nodes=0):
+        super().__init__(eid, nodes, n_local_nodes=n_local_nodes)
         self.E = E
         self.area = area
-
-    @property
-    def B(self):
-        """
-        Vector of shape function 1st derivatives.
-
-        Each shape function derivative is a compiled symbolic function which
-        can be called by passing in a float or integer.
-
-        Returns
-        -------
-        B: list(function)
-        """
-        return np.array([lambdify(x, diff(Ni)) for Ni in self._N])
 
     @property
     def J(self):
@@ -331,5 +367,76 @@ class Rod(AbstractElement1D):
         I = np.outer(Bz, Bz)
         return self.J * self.E * self.area * I
 
+    @property
+    def ngp(self):
+        """
+        The number of gauss points required to integrate the element exactly.
+
+        ngp = (p + 1) / 2 = n / 2, where:
+            p = degree of polynomial integration
+            n = number of DOF's in the element.
+
+        Note the in the element coordinate system for a Rod, each node only has
+        1 DOF since the element can only deform axially.
+
+        Returns
+        -------
+        ngp: int
+        """
+        return ceil(len(self.nodes) / 2)
+
+    @property
+    def R(self):
+        """
+        Local coordinate system to element coordinate system transformation matrix.
+
+        Vectors in the local coordinate system can be converted to the element
+        coordinate system by pre-multiplying by R.
+
+        Returns
+        -------
+        R: numpy.ndarray
+        """
+        n = self.ndof // 2
+        r = np.zeros((len(self.nodes), self.ndof))
+        for i in range(len(self.nodes)):
+            r[i, n * i:n * (i + 1)] = [(x2 - x1) / self.length for x1, x2 in zip(self.nodes[0].x, self.nodes[-1].x)]
+        return r
+
     def to_post(self, post_nodes):
         return PostRod(self, post_nodes)
+
+    @property
+    def _B(self):
+        """
+        Vector of shape function 1st derivative symbolic functions.
+
+        Returns
+        -------
+        _B: list(function)
+        """
+        return np.array([diff(Ni) for Ni in self._N])
+
+    @property
+    def _N(self):
+        """
+        Symbolic shape functions for each node in a 1D element which supports
+        axial loading only.
+
+        Returns
+        -------
+        _N: list(symbolic function of x, REF: SymPy)
+
+        References
+        ----------
+        .. [1] Fish, Jacob and Belytschko, Ted. "A First Course in Finite Elements."
+           John Wiley & Sons, 2007. Chapter 4.3.
+        """
+        N = []
+        for i, zi in enumerate(self.z):
+            Ni = 1.
+            for j, zj in enumerate(self.z):
+                if i != j:
+                    Ni = Ni * (x - zj) / (zi - zj)
+            N.append(Ni)
+        return N
