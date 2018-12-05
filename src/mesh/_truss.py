@@ -5,7 +5,7 @@ import numpy as np
 
 from numpy import transpose
 
-SRC_DIR = os.path.abspath("..")
+SRC_DIR = os.path.dirname(os.path.dirname(__file__))
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
@@ -224,5 +224,3 @@ class Truss(object):
             vector_dict[node.id] = np.array(v[total_dof:total_dof+node.ndof], dtype=float)
             total_dof += node.ndof
         return vector_dict
-
-
